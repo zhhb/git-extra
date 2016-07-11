@@ -58,13 +58,12 @@ function listBranchName() {
             refs.forEach(function (ref) {
                 var ref_name = ref.name();
                 var names = ref_name.split('/');
-                var headsBranchIndex = 2;
                 if (names[1] == 'heads') {
                     if (branches_keys.indexOf(ref_name) > -1) {
-                        console.log(localBranch == ref ? ' ∗' : '  ', chalk.green(names[headsBranchIndex]), chalk.yellow('('), chalk.yellow(branches[ref_name]), chalk.yellow(')'));
+                        console.log(localBranch == ref ? ' ∗' : '  ', chalk.green(names.slice(2).join('/')), chalk.yellow('('), chalk.yellow(branches[ref_name]), chalk.yellow(')'));
                     }
                     else {
-                        console.log(localBranch == ref ? ' ∗' : '  ', chalk.green(names[headsBranchIndex]));
+                        console.log(localBranch == ref ? ' ∗' : '  ', chalk.green(names.slice(2).join('/')));
                     }
                 }
             });
@@ -92,14 +91,13 @@ function ckeckoutBranchName(rawArgv) {
                 refs.forEach(function (ref) {
                     var ref_name = ref.name();
                     var names = ref_name.split('/');
-                    var headsBranchIndex = 2;
                     if (names[1] == 'heads') {
                         if (branches_keys.indexOf(ref_name) > -1) {
-                            choices.push(chalk.green(names[headsBranchIndex]) + chalk.yellow(' ( ') + chalk.yellow(branches[ref_name]) + chalk.yellow(' ) '));
+                            choices.push(chalk.green(names.slice(2).join('/')) + chalk.yellow(' ( ') + chalk.yellow(branches[ref_name]) + chalk.yellow(' ) '));
                             choicesRefs.push(ref_name);
                         }
                         else {
-                            choices.push(chalk.green(names[headsBranchIndex]));
+                            choices.push(chalk.green(names.slice(2).join('/')));
                             choicesRefs.push(ref_name);
                         }
                     }
