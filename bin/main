@@ -8,38 +8,29 @@ var program = require('commander');
 var NodeGit = require('nodegit');
 
 var package = require('../package.json');
-
-var rightSpacePad = function (str, length) {
-    while (str.length < length) {
-        str += ' ';
-    }
-    return str;
-};
-
-var checkZgitDir = function (gitPath) {
-    var CONFIG_FILE_MAP = {};
-    var zgitConfigBranchFilePath = path.resolve(gitPath, '.zgit/branches.json');
-    CONFIG_FILE_MAP['branches'] = zgitConfigBranchFilePath;
-    try {
-        fs.statSync(zgitConfigBranchFilePath);
-    }
-    catch (e) {
-        fs.ensureFileSync(zgitConfigBranchFilePath);
-    }
-    return CONFIG_FILE_MAP;
-};
+var utils = require('../lib/utils');
 
 //this will be object of repo
-function aliasBranchName(aliasname) {
+function aliasBranchName() {
     var repo = this;
     var gitPath = repo.path();
-    var zgitConfigs = checkZgitDir(gitPath);
-    var branchesConfigPath = zgitConfigs['branches'];
-    var branches = JSON.parse(fs.readFileSync(branchesConfigPath, 'utf8') || '{}');
+    var branches = utils.readBranchesConf(gitPath);
     repo.getCurrentBranch().then(function (reference) {
         var localBranch = reference.name();//get refs name
-        branches[localBranch] = aliasname;//make link map  local branch --> custom alias branch name
-        fs.writeFileSync(branchesConfigPath, JSON.stringify(branches))
+        inquirer
+            .prompt({
+                type   : 'input',
+                name   : 'alias_local_branch_alias',
+                message: '请输入分支的别名'
+            })
+            .then(function (result) {
+                var aliasName = result['alias_local_branch_alias'].trim();
+                //make link map  local branch --> custom alias branch name
+                if (aliasName) {
+                    branches[localBranch] = aliasName;
+                }
+                utils.saveBranchesCOnf(gitPath, branches);
+            })
     });
 }
 
@@ -47,9 +38,7 @@ function aliasBranchName(aliasname) {
 function listBranchName() {
     var repo = this;
     var gitPath = repo.path();
-    var zgitConfigs = checkZgitDir(gitPath);
-    var branchesConfigPath = zgitConfigs['branches'];
-    var branches = JSON.parse(fs.readFileSync(branchesConfigPath, 'utf8') || '{}');
+    var branches = utils.readBranchesConf(gitPath);
     var branches_keys = Object.keys(branches);
 
     repo.getCurrentBranch().then(function (reference) {
@@ -75,9 +64,7 @@ function listBranchName() {
 function ckeckoutBranchName(rawArgv) {
     var repo = this;
     var gitPath = repo.path();
-    var zgitConfigs = checkZgitDir(gitPath);
-    var branchesConfigPath = zgitConfigs['branches'];
-    var branches = JSON.parse(fs.readFileSync(branchesConfigPath, 'utf8') || '{}');
+    var branches = utils.readBranchesConf(gitPath);
     var branches_keys = Object.keys(branches);
     var argv = rawArgv.slice(1);
 
@@ -128,10 +115,10 @@ function ckeckoutBranchName(rawArgv) {
                             .then(function () {
                                 if (alias) {
                                     branches[ref] = alias;
-                                    fs.writeFileSync(branchesConfigPath, JSON.stringify(branches));
+                                    utils.saveBranchesCOnf(gitPath, branches);
                                 }
                             }, function (err) {
-                                console.error(arguments);
+                                console.error(err);
                             });
                     });
             });
@@ -143,9 +130,9 @@ program.version(package.version);
 
 program
     .command('checkout')
-    .description('检出一个远程分支，并且对它进行重命名，但是并不是修改分支名称，zgit仅仅做了分支别名的一个映射')
+    .description('检出一个分支，并且对它进行重命名，但是并不是修改分支名称，zgit仅仅做了分支别名的一个映射')
     .option('-r,--remote <remotebranch>', '检出一个远程分支')
-    .option('-l,--local <localbranch>', '检出一个远程分支')
+    .option('-l,--local <localbranch>', '检出一个本地分支')
     .action(function cmd_checkout() {
         var cwd = process.cwd();
         var rawArgv = program['rawArgs'].slice(2);
@@ -160,7 +147,7 @@ program
     });
 
 program
-    .command('alias <aliasName>')
+    .command('alias')
     .description('设置或者修改当前分支的别名，但是并不是修改分支名称，zgit仅仅做了分支别名的一个映射')
     .action(function cmd_alias(aliasName) {
         var cwd = process.cwd();
@@ -177,7 +164,9 @@ program
 
 program
     .command('branch')
+    .alias('list')
     .description('查看当前项目的所有别名和改别名对应的本地分支名和远程分支名，但是并不是修改分支名称，zgit仅仅做了分支别名的一个映射')
+    .option('-r,--remote', '查看当前项目远程分支以及对应的别名')
     .action(function cmd_list() {
         var cwd = process.cwd();
         var repoPath = path.resolve(cwd);
