@@ -5,7 +5,11 @@ zgit
 
 A command line tool make extra to git
 
+## Feature
 
++  **`zgit checkout -r`** make zgit can checkout from remote branch and create an new local branch and then alias it
++  **`zgit checkout -l`** make zgit can checkout from local branch and create an new local branch and then alias it
++  **`zgit branch -r` make zgit can list remote  **`<em style="color:green;">✔</em>`**︎
 ## Documentation
 
 ### Installation
@@ -20,8 +24,10 @@ cnpm install -g zgit
 ``` shell
 ## list local branches with alias
 zgit branch //list
+
 ## alias current local branch
 zgit alias
+
 ## checkout one of local branches by select list
 zgit checkout
 ```
