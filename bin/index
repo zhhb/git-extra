@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+var yargs = require('yargs'); 
+var package = require('../package.json');
+var branches = require('../lib/hook.branches');
+
+var argv = yargs.argv;
+
+console.log(argv)
+console.log(process.argv.slice(2));
